@@ -12,8 +12,13 @@ const DEFAULT_RETRY_DELAY_MS = 1000
 const DEFAULT_TIMEOUT_MS = 30_000
 const DEFAULT_RETRIES = 3
 
+export const PLATFORM_BASE_URLS = {
+    kemono: "https://kemono.cr/api",
+    coomer: "https://coomer.st/api",
+} as const
+
 export const DEFAULT_HTTP_CONFIG: HttpClientConfig = {
-    baseUrl: "https://kemono.cr/api",
+    baseUrl: PLATFORM_BASE_URLS.kemono,
     retries: DEFAULT_RETRIES,
     retryDelay: DEFAULT_RETRY_DELAY_MS,
     timeoutMs: DEFAULT_TIMEOUT_MS,

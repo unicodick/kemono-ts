@@ -1,11 +1,27 @@
-export type Service
-    = | "patreon"
-        | "fanbox"
-        | "gumroad"
-        | "subscribestar"
-        | "dlsite"
-        | "fantia"
+export type Platform = "kemono" | "coomer"
+
+export type KemonoService
+    = | "afdian"
         | "boosty"
+        | "subscribestar"
+        | "gumroad"
+        | "dlsite"
+        | "patreon"
+        | "fanbox"
+        | "discord"
+        | "fantia"
+
+export type CoomerService = "onlyfans" | "fansly" | "candfans"
+
+export type ServiceMap = {
+    kemono: KemonoService,
+    coomer: CoomerService,
+}
+
+export type PlatformService<P extends Platform> = ServiceMap[P]
+
+// Kept for backwards-compat: the full union used in shared domain types
+export type Service = KemonoService | CoomerService
 
 export type FileAttachment = {
     name: string,
