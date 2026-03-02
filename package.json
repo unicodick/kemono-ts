@@ -1,6 +1,6 @@
 {
     "name": "kemono-ts",
-    "version": "0.0.2",
+    "version": "0.0.3",
     "description": "Typed TypeScript client for the Kemono/Coomer API",
     "type": "module",
     "main": "build/index.js",
