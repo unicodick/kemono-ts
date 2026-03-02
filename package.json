@@ -1,7 +1,7 @@
 {
     "name": "kemono-ts",
-    "version": "0.0.1",
-    "description": "Typed TypeScript client for the Kemono API",
+    "version": "0.0.2",
+    "description": "Typed TypeScript client for the Kemono/Coomer API",
     "type": "module",
     "main": "build/index.js",
     "module": "build/index.js",
@@ -23,6 +23,8 @@
     "keywords": [
         "kemono",
         "kemono.cr",
+        "coomer",
+        "coomer.st",
         "api",
         "client",
         "typescript"
