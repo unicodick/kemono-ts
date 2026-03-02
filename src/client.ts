@@ -3,7 +3,12 @@ import {
     getFancards,
     listCreators,
 } from "@/endpoints/creators"
-import { getPost, getPostRevisions, listPosts } from "@/endpoints/posts"
+import {
+    getPost,
+    getPostRevisions,
+    getRandomPost,
+    listPosts,
+} from "@/endpoints/posts"
 import type { Result } from "@/errors"
 import type { HttpClientConfig } from "@/http"
 import { DEFAULT_HTTP_CONFIG, PLATFORM_BASE_URLS } from "@/http"
@@ -17,6 +22,7 @@ import type {
     Post,
     PostDetail,
     PostRevision,
+    RandomPost,
 } from "@/types"
 
 export type KemonoClientConfig = {
@@ -47,8 +53,6 @@ export class KemonoClient<P extends Platform = "kemono"> {
         return new KemonoClient("coomer", config)
     }
 
-    // ── Creators ──────────────────────────────────────────────────────────────
-
     listCreators(): Promise<Result<Creator[]>> {
         return listCreators(this.config)
     }
@@ -64,10 +68,12 @@ export class KemonoClient<P extends Platform = "kemono"> {
         return getFancards(this.config, creatorId)
     }
 
-    // ── Posts ─────────────────────────────────────────────────────────────────
-
     listPosts(params?: ListPostsParams): Promise<Result<Post[]>> {
         return listPosts(this.config, params)
+    }
+
+    getRandomPost(): Promise<Result<RandomPost>> {
+        return getRandomPost(this.config)
     }
 
     getPost(

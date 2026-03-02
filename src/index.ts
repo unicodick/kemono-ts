@@ -18,5 +18,6 @@ export type {
     PostDetail,
     PostDetailResponse,
     PostRevision,
+    RandomPost,
     Service,
 } from "@/types"

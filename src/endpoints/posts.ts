@@ -7,6 +7,7 @@ import type {
     PostDetail,
     PostDetailResponse,
     PostRevision,
+    RandomPost,
 } from "@/types"
 
 export const listPosts = (
@@ -33,6 +34,11 @@ export const getPost = async (
         return result
     return { ok: true, value: result.value.post }
 }
+
+export const getRandomPost = (
+    config: HttpClientConfig,
+): Promise<Result<RandomPost>> =>
+    request<RandomPost>("/v1/posts/random", config)
 
 export const getPostRevisions = (
     config: HttpClientConfig,

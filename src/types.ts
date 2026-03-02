@@ -20,7 +20,6 @@ export type ServiceMap = {
 
 export type PlatformService<P extends Platform> = ServiceMap[P]
 
-// Kept for backwards-compat: the full union used in shared domain types
 export type Service = KemonoService | CoomerService
 
 export type FileAttachment = {
@@ -91,4 +90,10 @@ export type ListPostsParams = {
     q?: string,
     o?: number,
     tag?: string[],
+}
+
+export type RandomPost = {
+    service: Service,
+    artist_id: string,
+    post_id: string,
 }
