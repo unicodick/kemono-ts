@@ -1,5 +1,7 @@
 import {
     getAnnouncements,
+    getCreatorPosts,
+    getCreatorProfile,
     getFancards,
     listCreators,
 } from "@/endpoints/creators"
@@ -15,6 +17,9 @@ import { DEFAULT_HTTP_CONFIG, PLATFORM_BASE_URLS } from "@/http"
 import type {
     Announcement,
     Creator,
+    CreatorPostsParams,
+    CreatorPostsResponse,
+    CreatorProfile,
     Fancard,
     ListPostsParams,
     Platform,
@@ -62,6 +67,21 @@ export class KemonoClient<P extends Platform = "kemono"> {
         creatorId: string,
     ): Promise<Result<Announcement[]>> {
         return getAnnouncements(this.config, service, creatorId)
+    }
+
+    getCreatorProfile(
+        service: PlatformService<P>,
+        creatorId: string,
+    ): Promise<Result<CreatorProfile>> {
+        return getCreatorProfile(this.config, service, creatorId)
+    }
+
+    getCreatorPosts(
+        service: PlatformService<P>,
+        creatorId: string,
+        params?: CreatorPostsParams,
+    ): Promise<Result<CreatorPostsResponse>> {
+        return getCreatorPosts(this.config, service, creatorId, params)
     }
 
     getFancards(creatorId: string): Promise<Result<Fancard[]>> {

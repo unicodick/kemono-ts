@@ -97,3 +97,55 @@ export type RandomPost = {
     artist_id: string,
     post_id: string,
 }
+
+export type CreatorProfile = {
+    id: string,
+    public_id: string,
+    service: Service,
+    name: string,
+    indexed: string,
+    updated: string,
+}
+
+export type CreatorArtist = {
+    id: string,
+    name: string,
+    service: string,
+    indexed: string,
+    updated: string,
+    public_id: string,
+    relation_id: number,
+}
+
+export type CreatorDisplayData = {
+    service: string,
+    href: string,
+}
+
+export type CreatorPostsProps = {
+    currentPage: string,
+    id: string,
+    service: string,
+    name: string,
+    count: number,
+    limit: number,
+    artist: CreatorArtist,
+    display_data: CreatorDisplayData,
+    dm_count: number,
+    share_count: number,
+    has_links: string,
+}
+
+export type CreatorPostsParams = {
+    tag?: string[],
+}
+
+export type CreatorPostsResponse = {
+    props: CreatorPostsProps,
+    base: Record<string, unknown>,
+    results: Post[],
+    result_previews: Record<string, unknown>[],
+    result_attachments: Record<string, unknown>[],
+    result_is_image: boolean[],
+    disable_service_icons: boolean,
+}
