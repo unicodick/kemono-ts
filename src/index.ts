@@ -6,10 +6,14 @@ export { err, ok } from "@/errors"
 
 export type {
     Announcement,
+    CoomerService,
     Creator,
     Fancard,
     FileAttachment,
+    KemonoService,
     ListPostsParams,
+    Platform,
+    PlatformService,
     Post,
     PostDetail,
     PostDetailResponse,
