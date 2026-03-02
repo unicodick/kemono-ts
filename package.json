@@ -1,0 +1,46 @@
+{
+    "name": "kemono-ts",
+    "version": "0.0.1",
+    "description": "Typed TypeScript client for the Kemono API",
+    "type": "module",
+    "main": "build/index.js",
+    "module": "build/index.js",
+    "types": "build/index.d.ts",
+    "exports": {
+        ".": {
+            "import": "./build/index.js",
+            "types": "./build/index.d.ts"
+        }
+    },
+    "files": [
+        "build"
+    ],
+    "scripts": {
+        "build": "tsup src/index.ts --format esm --dts --outDir build --clean --tsconfig tsconfig.build.json",
+        "lint": "eslint src/** eslint.config.mjs",
+        "typecheck": "tsc -p tsconfig.json --noEmit"
+    },
+    "keywords": [
+        "kemono",
+        "kemono.cr",
+        "api",
+        "client",
+        "typescript"
+    ],
+    "license": "MIT",
+    "engines": {
+        "node": ">=20"
+    },
+    "devDependencies": {
+        "@antfu/eslint-config": "^4.12.0",
+        "@types/node": "^22.14.1",
+        "eslint": "^9.24.0",
+        "tsup": "^8.4.0",
+        "typescript": "^5.8.3"
+    },
+    "pnpm": {
+        "onlyBuiltDependencies": [
+            "esbuild"
+        ]
+    }
+}
