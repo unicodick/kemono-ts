@@ -6,16 +6,17 @@ import {
 import { getPost, getPostRevisions, listPosts } from "@/endpoints/posts"
 import type { Result } from "@/errors"
 import type { HttpClientConfig } from "@/http"
-import { DEFAULT_HTTP_CONFIG } from "@/http"
+import { DEFAULT_HTTP_CONFIG, PLATFORM_BASE_URLS } from "@/http"
 import type {
     Announcement,
     Creator,
     Fancard,
     ListPostsParams,
+    Platform,
+    PlatformService,
     Post,
     PostDetail,
     PostRevision,
-    Service,
 } from "@/types"
 
 export type KemonoClientConfig = {
@@ -25,24 +26,35 @@ export type KemonoClientConfig = {
     timeoutMs?: number,
 }
 
-export class KemonoClient {
+export class KemonoClient<P extends Platform = "kemono"> {
     private readonly config: HttpClientConfig
 
-    constructor(clientConfig: KemonoClientConfig = {}) {
+    constructor(platform: P, clientConfig: KemonoClientConfig = {}) {
         this.config = {
             ...DEFAULT_HTTP_CONFIG,
+            baseUrl: PLATFORM_BASE_URLS[platform],
             ...Object.fromEntries(
                 Object.entries(clientConfig).filter(([, v]) => v !== undefined),
             ),
         } as HttpClientConfig
     }
 
+    static kemono(config: KemonoClientConfig = {}): KemonoClient<"kemono"> {
+        return new KemonoClient("kemono", config)
+    }
+
+    static coomer(config: KemonoClientConfig = {}): KemonoClient<"coomer"> {
+        return new KemonoClient("coomer", config)
+    }
+
+    // ── Creators ──────────────────────────────────────────────────────────────
+
     listCreators(): Promise<Result<Creator[]>> {
         return listCreators(this.config)
     }
 
     getAnnouncements(
-        service: Service,
+        service: PlatformService<P>,
         creatorId: string,
     ): Promise<Result<Announcement[]>> {
         return getAnnouncements(this.config, service, creatorId)
@@ -52,12 +64,14 @@ export class KemonoClient {
         return getFancards(this.config, creatorId)
     }
 
+    // ── Posts ─────────────────────────────────────────────────────────────────
+
     listPosts(params?: ListPostsParams): Promise<Result<Post[]>> {
         return listPosts(this.config, params)
     }
 
     getPost(
-        service: Service,
+        service: PlatformService<P>,
         creatorId: string,
         postId: string,
     ): Promise<Result<PostDetail>> {
@@ -65,7 +79,7 @@ export class KemonoClient {
     }
 
     getPostRevisions(
-        service: Service,
+        service: PlatformService<P>,
         creatorId: string,
         postId: string,
     ): Promise<Result<PostRevision[]>> {
