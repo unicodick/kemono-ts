@@ -109,15 +109,51 @@ describe("request()", () => {
             }
         })
 
-        it("returns HTTP_ERROR with fallback message when body is empty", async () => {
+        it("returns NOT_FOUND on empty-body 500 (Kemono missing-resource pattern)", async () => {
             mockFetch({ status: 500, rawBody: "" })
 
             const result = await request("/v1/posts", BASE_CONFIG)
 
             expect(result.ok).toBe(false)
             if (!result.ok) {
+                expect(result.error.code).toBe("NOT_FOUND")
+                expect(result.error.status).toBe(500)
+            }
+        })
+
+        it("returns NOT_FOUND on empty-body 302 (redirect for missing resource)", async () => {
+            mockFetch({ status: 302, rawBody: "" })
+
+            const result = await request("/v1/posts", BASE_CONFIG)
+
+            expect(result.ok).toBe(false)
+            if (!result.ok) {
+                expect(result.error.code).toBe("NOT_FOUND")
+                expect(result.error.status).toBe(302)
+            }
+        })
+
+        it("returns NOT_FOUND on whitespace-only body non-2xx", async () => {
+            mockFetch({ status: 500, rawBody: "   " })
+
+            const result = await request("/v1/posts", BASE_CONFIG)
+
+            expect(result.ok).toBe(false)
+            if (!result.ok) {
+                expect(result.error.code).toBe("NOT_FOUND")
+            }
+        })
+
+        it("returns HTTP_ERROR with body message when body is non-empty", async () => {
+            mockFetch({ status: 500, rawBody: "internal server error" })
+
+            const result = await request("/v1/posts", BASE_CONFIG)
+
+            expect(result.ok).toBe(false)
+            if (!result.ok) {
                 expect(result.error.code).toBe("HTTP_ERROR")
-                expect(result.error.message).toBe("HTTP 500")
+                expect(result.error.message).toBe("internal server error")
+                expect(result.error.status).toBe(500)
             }
         })
     })

@@ -89,6 +89,22 @@ describe("getCreatorProfile()", () => {
             expect(result.error.code).toBe("NOT_FOUND")
         }
     })
+
+    it("returns NOT_FOUND on empty-body non-404 (Kemono missing-resource pattern)", async () => {
+        mockFetch({ status: 500, rawBody: "" })
+
+        const result = await getCreatorProfile(
+            CONFIG,
+            "fanbox",
+            "__no_such_creator__",
+        )
+
+        expect(result.ok).toBe(false)
+        if (!result.ok) {
+            expect(result.error.code).toBe("NOT_FOUND")
+            expect(result.error.status).toBe(500)
+        }
+    })
 })
 
 describe("getCreatorPosts()", () => {
@@ -244,6 +260,23 @@ describe("getPost()", () => {
         expect(result.ok).toBe(false)
         if (!result.ok) {
             expect(result.error.code).toBe("NOT_FOUND")
+        }
+    })
+
+    it("returns NOT_FOUND on empty-body non-404 (Kemono missing-resource pattern)", async () => {
+        mockFetch({ status: 500, rawBody: "" })
+
+        const result = await getPost(
+            CONFIG,
+            "fanbox",
+            "__no_such_creator__",
+            "__no_such_post__",
+        )
+
+        expect(result.ok).toBe(false)
+        if (!result.ok) {
+            expect(result.error.code).toBe("NOT_FOUND")
+            expect(result.error.status).toBe(500)
         }
     })
 })
