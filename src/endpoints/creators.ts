@@ -1,7 +1,7 @@
-import type { HttpClientConfig } from "@/config";
-import { request } from "@/http";
-import type { QueryParams } from "@/http";
-import type { Result } from "@/result";
+import type { HttpClientConfig } from "@/config"
+import { request } from "@/http"
+import type { QueryParams } from "@/http"
+import type { Result } from "@/result"
 import type {
     Announcement,
     Creator,
@@ -9,21 +9,21 @@ import type {
     CreatorPostsResponse,
     CreatorProfile,
     Fancard,
-} from "@/types/creator";
+} from "@/types/creator"
 
 const toQueryParams = (params: CreatorPostsParams): QueryParams =>
-    params as QueryParams;
+    params as QueryParams
 
 export const listCreators = (
     config: HttpClientConfig,
-): Promise<Result<Creator[]>> => request<Creator[]>("/v1/creators.txt", config);
+): Promise<Result<Creator[]>> => request<Creator[]>("/v1/creators.txt", config)
 
 export const getCreatorProfile = (
     config: HttpClientConfig,
     service: string,
     creatorId: string,
 ): Promise<Result<CreatorProfile>> =>
-    request<CreatorProfile>(`/v1/${service}/user/${creatorId}/profile`, config);
+    request<CreatorProfile>(`/v1/${service}/user/${creatorId}/profile`, config)
 
 export const getCreatorPosts = (
     config: HttpClientConfig,
@@ -35,7 +35,7 @@ export const getCreatorPosts = (
         `/v1/${service}/user/${creatorId}/posts`,
         config,
         params ? toQueryParams(params) : undefined,
-    );
+    )
 
 export const getAnnouncements = (
     config: HttpClientConfig,
@@ -45,7 +45,7 @@ export const getAnnouncements = (
     request<Announcement[]>(
         `/v1/${service}/user/${creatorId}/announcements`,
         config,
-    );
+    )
 
 /**
  * fetches fancards for a Fanbox creator.
@@ -59,4 +59,4 @@ export const getFancards = (
     config: HttpClientConfig,
     creatorId: string,
 ): Promise<Result<Fancard[]>> =>
-    request<Fancard[]>(`/v1/fanbox/user/${creatorId}/fancards`, config);
+    request<Fancard[]>(`/v1/fanbox/user/${creatorId}/fancards`, config)
