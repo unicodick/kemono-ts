@@ -157,11 +157,54 @@ describe("listPosts()", () => {
         mockFetch({ status: 200, body: [] })
         const tracker = captureUrl()
 
-        await listPosts(CONFIG, { q: "illustration", o: 50 })
+        await listPosts(CONFIG, { q: "illustration", o: 150 })
 
         const url = tracker.get()
         expect(url).toContain("q=illustration")
-        expect(url).toContain("o=50")
+        expect(url).toContain("o=150")
+    })
+
+    it("returns INVALID_PARAMS without fetching when o is not a multiple of 150", async () => {
+        const spy = vi.spyOn(globalThis, "fetch")
+
+        const result = await listPosts(CONFIG, { o: 25 })
+
+        expect(spy).not.toHaveBeenCalled()
+        expect(result.ok).toBe(false)
+        if (!result.ok) {
+            expect(result.error.code).toBe("INVALID_PARAMS")
+            expect(result.error.message).toBe(
+                "offset must be a multiple of 150",
+            )
+        }
+    })
+
+    it("returns INVALID_PARAMS for any non-zero non-multiple offset", async () => {
+        const spy = vi.spyOn(globalThis, "fetch")
+
+        for (const offset of [1, 75, 149, 151, 300 + 1]) {
+            const result = await listPosts(CONFIG, { o: offset })
+            expect(spy).not.toHaveBeenCalled()
+            expect(result.ok).toBe(false)
+            if (!result.ok)
+                expect(result.error.code).toBe("INVALID_PARAMS")
+        }
+    })
+
+    it("accepts valid multiples of 150 without error", async () => {
+        for (const offset of [0, 150, 300, 450]) {
+            mockFetch({ status: 200, body: [] })
+            const result = await listPosts(CONFIG, { o: offset })
+            expect(result.ok).toBe(true)
+        }
+    })
+
+    it("omitting o skips validation and fetches successfully", async () => {
+        mockFetch({ status: 200, body: [] })
+
+        const result = await listPosts(CONFIG, { q: "cats" })
+
+        expect(result.ok).toBe(true)
     })
 })
 

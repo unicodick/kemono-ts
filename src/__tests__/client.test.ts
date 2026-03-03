@@ -201,11 +201,11 @@ describe("kemonoClient methods", () => {
             mockFetch({ status: 200, body: [] })
             const spy = vi.spyOn(globalThis, "fetch")
 
-            await client.listPosts({ q: "sketch", o: 100 })
+            await client.listPosts({ q: "sketch", o: 300 })
 
             const url = (spy.mock.calls[0] as [string])[0]
             expect(url).toContain("q=sketch")
-            expect(url).toContain("o=100")
+            expect(url).toContain("o=300")
         })
     })
 
