@@ -41,6 +41,12 @@ export type RandomPost = {
 
 export type ListPostsParams = {
     q?: string,
+    /**
+     * pagination offset. Must be a multiple of 150 (e.g. 0, 150, 300, ...).
+     * passing any other value will cause the API to reject the request.
+     * the client validates this before sending and returns an `INVALID_PARAMS`
+     * error if the constraint is not satisfied.
+     */
     o?: number,
     tag?: string[],
 }
