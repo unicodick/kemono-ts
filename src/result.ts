@@ -4,6 +4,7 @@ export type KemonoErrorCode
         | "PARSE_ERROR"
         | "NOT_FOUND"
         | "RATE_LIMITED"
+        | "INVALID_PARAMS"
 
 export type KemonoError = {
     code: KemonoErrorCode,

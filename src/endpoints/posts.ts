@@ -2,6 +2,7 @@ import type { HttpClientConfig } from "@/config"
 import { request } from "@/http"
 import type { QueryParams } from "@/http"
 import type { Result } from "@/result"
+import { err } from "@/result"
 import type {
     ListPostsParams,
     Post,
@@ -11,18 +12,30 @@ import type {
     RandomPost,
 } from "@/types/post"
 
+const OFFSET_STEP = 150
+
 const toQueryParams = (params: ListPostsParams): QueryParams =>
     params as QueryParams
 
 export const listPosts = (
     config: HttpClientConfig,
     params?: ListPostsParams,
-): Promise<Result<Post[]>> =>
-    request<Post[]>(
+): Promise<Result<Post[]>> => {
+    if (params?.o !== undefined && params.o % OFFSET_STEP !== 0) {
+        return Promise.resolve(
+            err(
+                "INVALID_PARAMS",
+                `offset must be a multiple of ${OFFSET_STEP}`,
+            ),
+        )
+    }
+
+    return request<Post[]>(
         "/v1/posts",
         config,
         params ? toQueryParams(params) : undefined,
     )
+}
 
 export const getPost = async (
     config: HttpClientConfig,
