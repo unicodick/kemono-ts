@@ -1,28 +1,6 @@
-import type { KemonoError, Result } from "@/errors"
-import { err, ok } from "@/errors"
-
-export type HttpClientConfig = {
-    baseUrl: string,
-    retries: number,
-    retryDelay: number,
-    timeoutMs: number,
-}
-
-const DEFAULT_RETRY_DELAY_MS = 1000
-const DEFAULT_TIMEOUT_MS = 30_000
-const DEFAULT_RETRIES = 3
-
-export const PLATFORM_BASE_URLS = {
-    kemono: "https://kemono.cr/api",
-    coomer: "https://coomer.st/api",
-} as const
-
-export const DEFAULT_HTTP_CONFIG: HttpClientConfig = {
-    baseUrl: PLATFORM_BASE_URLS.kemono,
-    retries: DEFAULT_RETRIES,
-    retryDelay: DEFAULT_RETRY_DELAY_MS,
-    timeoutMs: DEFAULT_TIMEOUT_MS,
-}
+import type { HttpClientConfig } from "@/config"
+import type { KemonoError, Result } from "@/result"
+import { err, ok } from "@/result"
 
 const sleep = (ms: number): Promise<void> =>
     new Promise(resolve => setTimeout(resolve, ms))
@@ -31,12 +9,10 @@ const isRetryable = (status: number): boolean =>
     status === 429 || status >= 500
 
 const mapHttpError = (status: number, body: string): KemonoError => {
-    if (status === 404) {
+    if (status === 404)
         return { code: "NOT_FOUND", message: "Resource not found", status }
-    }
-    if (status === 429) {
+    if (status === 429)
         return { code: "RATE_LIMITED", message: "Rate limit exceeded", status }
-    }
     return { code: "HTTP_ERROR", message: body || `HTTP ${status}`, status }
 }
 
@@ -48,24 +24,31 @@ const parseRetryAfter = (response: Response): number | null => {
     return Number.isFinite(seconds) ? seconds * 1000 : null
 }
 
+export type QueryParams = Record<
+    string,
+    string | string[] | number | undefined
+>
+
+const applyParams = (url: URL, params: QueryParams): void => {
+    for (const [key, value] of Object.entries(params)) {
+        if (value === undefined)
+            continue
+        if (Array.isArray(value)) {
+            for (const item of value) url.searchParams.append(key, item)
+        } else {
+            url.searchParams.set(key, String(value))
+        }
+    }
+}
+
 export const request = async <T>(
     path: string,
     config: HttpClientConfig,
-    params?: Record<string, string | string[] | number | undefined>,
+    params?: QueryParams,
 ): Promise<Result<T>> => {
     const url = new URL(`${config.baseUrl}${path}`)
-
-    if (params) {
-        for (const [key, value] of Object.entries(params)) {
-            if (value === undefined)
-                continue
-            if (Array.isArray(value)) {
-                for (const item of value) url.searchParams.append(key, item)
-            } else {
-                url.searchParams.set(key, String(value))
-            }
-        }
-    }
+    if (params)
+        applyParams(url, params)
 
     let attempt = 0
 
