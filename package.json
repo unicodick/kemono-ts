@@ -15,9 +15,11 @@
     "files": [
         "build"
     ],
+    "sideEffects": false,
     "scripts": {
         "build": "tsup src/index.ts --format esm --dts --outDir build --clean --tsconfig tsconfig.build.json",
         "lint": "eslint src/** eslint.config.mjs",
+        "test": "vitest run",
         "typecheck": "tsc -p tsconfig.json --noEmit"
     },
     "keywords": [
@@ -30,6 +32,14 @@
         "typescript"
     ],
     "license": "MIT",
+    "homepage": "https://github.com/unicodick/kemono-ts#readme",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/unicodick/kemono-ts.git"
+    },
+    "bugs": {
+        "url": "https://github.com/unicodick/kemono-ts/issues"
+    },
     "engines": {
         "node": ">=20"
     },
@@ -38,7 +48,8 @@
         "@types/node": "^22.14.1",
         "eslint": "^9.24.0",
         "tsup": "^8.4.0",
-        "typescript": "^5.8.3"
+        "typescript": "^5.8.3",
+        "vitest": "^4.0.18"
     },
     "pnpm": {
         "onlyBuiltDependencies": [
