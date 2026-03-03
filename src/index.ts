@@ -1,12 +1,19 @@
 export { KemonoClient } from "@/client"
 export type { KemonoClientConfig } from "@/client"
 
-export type { KemonoError, KemonoErrorCode, Result } from "@/errors"
-export { err, ok } from "@/errors"
+export type {
+    CoomerService,
+    KemonoService,
+    Platform,
+    PlatformService,
+    Service,
+} from "@/platforms"
+export { err, ok } from "@/result"
+
+export type { KemonoError, KemonoErrorCode, Result } from "@/result"
 
 export type {
     Announcement,
-    CoomerService,
     Creator,
     CreatorArtist,
     CreatorDisplayData,
@@ -15,15 +22,14 @@ export type {
     CreatorPostsResponse,
     CreatorProfile,
     Fancard,
+} from "@/types/creator"
+
+export type {
     FileAttachment,
-    KemonoService,
     ListPostsParams,
-    Platform,
-    PlatformService,
     Post,
     PostDetail,
     PostDetailResponse,
     PostRevision,
     RandomPost,
-    Service,
-} from "@/types"
+} from "@/types/post"

@@ -1,6 +1,7 @@
-import type { Result } from "@/errors"
-import type { HttpClientConfig } from "@/http"
-import { request } from "@/http"
+import type { HttpClientConfig } from "@/config";
+import { request } from "@/http";
+import type { QueryParams } from "@/http";
+import type { Result } from "@/result";
 import type {
     ListPostsParams,
     Post,
@@ -8,7 +9,10 @@ import type {
     PostDetailResponse,
     PostRevision,
     RandomPost,
-} from "@/types"
+} from "@/types/post";
+
+const toQueryParams = (params: ListPostsParams): QueryParams =>
+    params as QueryParams;
 
 export const listPosts = (
     config: HttpClientConfig,
@@ -17,8 +21,8 @@ export const listPosts = (
     request<Post[]>(
         "/v1/posts",
         config,
-        params as Record<string, string | string[] | number | undefined>,
-    )
+        params ? toQueryParams(params) : undefined,
+    );
 
 export const getPost = async (
     config: HttpClientConfig,
@@ -29,16 +33,15 @@ export const getPost = async (
     const result = await request<PostDetailResponse>(
         `/v1/${service}/user/${creatorId}/post/${postId}`,
         config,
-    )
-    if (!result.ok)
-        return result
-    return { ok: true, value: result.value.post }
-}
+    );
+    if (!result.ok) return result;
+    return { ok: true, value: result.value.post };
+};
 
 export const getRandomPost = (
     config: HttpClientConfig,
 ): Promise<Result<RandomPost>> =>
-    request<RandomPost>("/v1/posts/random", config)
+    request<RandomPost>("/v1/posts/random", config);
 
 export const getPostRevisions = (
     config: HttpClientConfig,
@@ -49,4 +52,4 @@ export const getPostRevisions = (
     request<PostRevision[]>(
         `/v1/${service}/user/${creatorId}/post/${postId}/revisions`,
         config,
-    )
+    );

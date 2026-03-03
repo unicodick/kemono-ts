@@ -1,3 +1,5 @@
+import { buildConfig } from "@/config"
+import type { HttpClientOptions } from "@/config"
 import {
     getAnnouncements,
     getCreatorPosts,
@@ -11,9 +13,8 @@ import {
     getRandomPost,
     listPosts,
 } from "@/endpoints/posts"
-import type { Result } from "@/errors"
-import type { HttpClientConfig } from "@/http"
-import { DEFAULT_HTTP_CONFIG, PLATFORM_BASE_URLS } from "@/http"
+import type { Platform, PlatformService } from "@/platforms"
+import type { Result } from "@/result"
 import type {
     Announcement,
     Creator,
@@ -21,41 +22,30 @@ import type {
     CreatorPostsResponse,
     CreatorProfile,
     Fancard,
+} from "@/types/creator"
+import type {
     ListPostsParams,
-    Platform,
-    PlatformService,
     Post,
     PostDetail,
     PostRevision,
     RandomPost,
-} from "@/types"
+} from "@/types/post"
 
-export type KemonoClientConfig = {
-    baseUrl?: string,
-    retries?: number,
-    retryDelay?: number,
-    timeoutMs?: number,
-}
+export type KemonoClientConfig = HttpClientOptions
 
 export class KemonoClient<P extends Platform = "kemono"> {
-    private readonly config: HttpClientConfig
+    private readonly config = buildConfig("kemono")
 
-    constructor(platform: P, clientConfig: KemonoClientConfig = {}) {
-        this.config = {
-            ...DEFAULT_HTTP_CONFIG,
-            baseUrl: PLATFORM_BASE_URLS[platform],
-            ...Object.fromEntries(
-                Object.entries(clientConfig).filter(([, v]) => v !== undefined),
-            ),
-        } as HttpClientConfig
+    constructor(platform: P, options: KemonoClientConfig = {}) {
+        this.config = buildConfig(platform, options)
     }
 
-    static kemono(config: KemonoClientConfig = {}): KemonoClient<"kemono"> {
-        return new KemonoClient("kemono", config)
+    static kemono(options: KemonoClientConfig = {}): KemonoClient<"kemono"> {
+        return new KemonoClient("kemono", options)
     }
 
-    static coomer(config: KemonoClientConfig = {}): KemonoClient<"coomer"> {
-        return new KemonoClient("coomer", config)
+    static coomer(options: KemonoClientConfig = {}): KemonoClient<"coomer"> {
+        return new KemonoClient("coomer", options)
     }
 
     listCreators(): Promise<Result<Creator[]>> {
