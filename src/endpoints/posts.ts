@@ -17,16 +17,14 @@ const OFFSET_STEP = 150
 const toQueryParams = (params: ListPostsParams): QueryParams =>
     params as QueryParams
 
-export const listPosts = (
+export const listPosts = async (
     config: HttpClientConfig,
     params?: ListPostsParams,
 ): Promise<Result<ListPostsResponse>> => {
     if (params?.o !== undefined && (params.o < 0 || params.o % OFFSET_STEP !== 0)) {
-        return Promise.resolve(
-            err(
-                "INVALID_PARAMS",
-                `offset must be a non-negative multiple of ${OFFSET_STEP}`,
-            ),
+        return err(
+            "INVALID_PARAMS",
+            `offset must be a non-negative multiple of ${OFFSET_STEP}`,
         )
     }
 
@@ -52,7 +50,7 @@ export const getPost = async (
 
     const post = result.value.post
     if (post === undefined || post === null || typeof post.id !== "string")
-        return err("PARSE_ERROR", "Expected { post: PostDetail } envelope but got unexpected response shape")
+        return err("PARSE_ERROR", "missing or invalid 'post' field in response")
 
     return ok(post)
 }
