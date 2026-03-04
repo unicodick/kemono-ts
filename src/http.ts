@@ -13,14 +13,6 @@ const mapHttpError = (status: number, body: string): KemonoError => {
         return { code: "NOT_FOUND", message: "Resource not found", status }
     if (status === 429)
         return { code: "RATE_LIMITED", message: "Rate limit exceeded", status }
-    // the Kemono/Coomer API does not consistently return 404 for missing
-    // resources. some endpoints (e.g. /profile, /post/:id) respond with a
-    // non-2xx status and an empty body when a creator or post ID is invalid.
-    // an empty body on a non-2xx response carries no diagnostic information, so
-    // we treat it as NOT_FOUND to honour the library's documented contract and
-    // spare callers from having to special-case the raw HTTP status themselves.
-    if (body.trim() === "")
-        return { code: "NOT_FOUND", message: "Resource not found", status }
     return { code: "HTTP_ERROR", message: body || `HTTP ${status}`, status }
 }
 
