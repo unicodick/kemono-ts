@@ -1,5 +1,5 @@
 import type { HttpClientConfig } from "@/config"
-import { request } from "@/http"
+import { encodePathSegment, request } from "@/http"
 import type { QueryParams } from "@/http"
 import type { Result } from "@/result"
 import { err, ok } from "@/result"
@@ -11,6 +11,12 @@ import type {
     PostRevision,
     RandomPost,
 } from "@/types/post"
+import {
+    isListPostsResponse,
+    isPostDetailResponse,
+    isPostRevisionList,
+    isRandomPost,
+} from "@/validation"
 
 const OFFSET_STEP = 150
 
@@ -32,6 +38,7 @@ export const listPosts = async (
         "/v1/posts",
         config,
         params ? toQueryParams(params) : undefined,
+        isListPostsResponse,
     )
 }
 
@@ -42,23 +49,26 @@ export const getPost = async (
     postId: string,
 ): Promise<Result<PostDetail>> => {
     const result = await request<PostDetailResponse>(
-        `/v1/${service}/user/${creatorId}/post/${postId}`,
+        `/v1/${encodePathSegment(service)}/user/${encodePathSegment(creatorId)}/post/${encodePathSegment(postId)}`,
         config,
+        undefined,
+        isPostDetailResponse,
     )
     if (!result.ok)
         return result
 
-    const post = result.value.post
-    if (post === undefined || post === null || typeof post.id !== "string")
-        return err("PARSE_ERROR", "missing or invalid 'post' field in response")
-
-    return ok(post)
+    return ok(result.value.post)
 }
 
 export const getRandomPost = async (
     config: HttpClientConfig,
 ): Promise<Result<PostDetail>> => {
-    const ptr = await request<RandomPost>("/v1/posts/random", config)
+    const ptr = await request<RandomPost>(
+        "/v1/posts/random",
+        config,
+        undefined,
+        isRandomPost,
+    )
     if (!ptr.ok)
         return ptr
     const { service, artist_id, post_id } = ptr.value
@@ -72,6 +82,8 @@ export const getPostRevisions = (
     postId: string,
 ): Promise<Result<PostRevision[]>> =>
     request<PostRevision[]>(
-        `/v1/${service}/user/${creatorId}/post/${postId}/revisions`,
+        `/v1/${encodePathSegment(service)}/user/${encodePathSegment(creatorId)}/post/${encodePathSegment(postId)}/revisions`,
         config,
+        undefined,
+        isPostRevisionList,
     )
