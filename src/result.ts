@@ -1,8 +1,11 @@
 export type KemonoErrorCode
     = | "HTTP_ERROR"
         | "NETWORK_ERROR"
+        | "TIMEOUT"
         | "PARSE_ERROR"
         | "NOT_FOUND"
+        | "UNAUTHORIZED"
+        | "FORBIDDEN"
         | "RATE_LIMITED"
         | "INVALID_PARAMS"
 

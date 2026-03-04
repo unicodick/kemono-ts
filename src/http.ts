@@ -11,6 +11,10 @@ const isRetryable = (status: number): boolean =>
 const mapHttpError = (status: number, body: string): KemonoError => {
     if (status === 404)
         return { code: "NOT_FOUND", message: "Resource not found", status }
+    if (status === 401)
+        return { code: "UNAUTHORIZED", message: "Unauthorized", status }
+    if (status === 403)
+        return { code: "FORBIDDEN", message: "Forbidden", status }
     if (status === 429)
         return { code: "RATE_LIMITED", message: "Rate limit exceeded", status }
     return { code: "HTTP_ERROR", message: body || `HTTP ${status}`, status }
@@ -21,13 +25,23 @@ const parseRetryAfter = (response: Response): number | null => {
     if (!header)
         return null
     const seconds = Number(header)
-    return Number.isFinite(seconds) ? seconds * 1000 : null
+    if (Number.isFinite(seconds))
+        return Math.max(0, seconds * 1000)
+    const retryAt = Date.parse(header)
+    if (Number.isFinite(retryAt))
+        return Math.max(0, retryAt - Date.now())
+    return null
 }
 
 export type QueryParams = Record<
     string,
     string | string[] | number | undefined
 >
+
+export type Validator<T> = (value: unknown) => value is T
+
+export const encodePathSegment = (value: string): string =>
+    encodeURIComponent(value)
 
 const applyParams = (url: URL, params: QueryParams): void => {
     for (const [key, value] of Object.entries(params)) {
@@ -45,10 +59,15 @@ export const request = async <T>(
     path: string,
     config: HttpClientConfig,
     params?: QueryParams,
+    validator?: Validator<T>,
 ): Promise<Result<T>> => {
     const url = new URL(`${config.baseUrl}${path}`)
     if (params)
         applyParams(url, params)
+
+    const fetchFn = config.fetch ?? globalThis.fetch?.bind(globalThis)
+    if (!fetchFn)
+        return err("NETWORK_ERROR", "Fetch implementation is not available")
 
     let attempt = 0
 
@@ -57,7 +76,7 @@ export const request = async <T>(
         const timer = setTimeout(() => controller.abort(), config.timeoutMs)
 
         try {
-            const response = await fetch(url.toString(), {
+            const response = await fetchFn(url.toString(), {
                 headers: config.headers,
                 signal: controller.signal,
             })
@@ -66,7 +85,9 @@ export const request = async <T>(
 
             if (response.ok) {
                 try {
-                    const data = (await response.json()) as T
+                    const data = await response.json()
+                    if (validator && !validator(data))
+                        return err("PARSE_ERROR", "Unexpected response shape")
                     return ok(data)
                 } catch {
                     return err("PARSE_ERROR", "Failed to parse JSON response")
@@ -95,7 +116,7 @@ export const request = async <T>(
                 && thrown.name === "AbortError"
             ) {
                 return err(
-                    "NETWORK_ERROR",
+                    "TIMEOUT",
                     `Request timed out after ${config.timeoutMs}ms`,
                 )
             }
