@@ -30,7 +30,6 @@ export type {
     ListPostsResponse,
     Post,
     PostDetail,
-    PostDetailResponse,
     PostRevision,
     PostSummary,
 } from "@/types/post"
