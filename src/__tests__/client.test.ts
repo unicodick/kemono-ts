@@ -32,6 +32,32 @@ describe("kemonoClient.kemono()", () => {
         const calledUrl = (spy.mock.calls[0] as [string])[0]
         expect(calledUrl).toContain(PLATFORM_BASE_URLS.kemono)
     })
+
+    it("sends Accept: text/css by default (upstream anti-scrape workaround)", async () => {
+        mockFetch({ status: 200, body: [] })
+        const spy = vi.spyOn(globalThis, "fetch")
+        const client = KemonoClient.kemono()
+
+        await client.listCreators()
+
+        const init = (spy.mock.calls[0] as [string, RequestInit])[1]
+        expect((init.headers as Record<string, string>).Accept).toBe("text/css")
+    })
+
+    it("forwards caller-supplied headers option to fetch", async () => {
+        mockFetch({ status: 200, body: [] })
+        const spy = vi.spyOn(globalThis, "fetch")
+        const client = KemonoClient.kemono({
+            headers: { Accept: "application/json" },
+        })
+
+        await client.listCreators()
+
+        const init = (spy.mock.calls[0] as [string, RequestInit])[1]
+        expect((init.headers as Record<string, string>).Accept).toBe(
+            "application/json",
+        )
+    })
 })
 
 describe("kemonoClient.coomer()", () => {
@@ -88,7 +114,7 @@ describe("kemonoClient methods", () => {
             await client.listCreators()
 
             expect((spy.mock.calls[0] as [string])[0]).toContain(
-                "/v1/creators.txt",
+                "/v1/creators",
             )
         })
 
@@ -134,6 +160,64 @@ describe("kemonoClient methods", () => {
             expect(result.ok).toBe(false)
             if (!result.ok) {
                 expect(result.error.code).toBe("NOT_FOUND")
+            }
+        })
+
+        it("returns all declared CreatorProfile fields on success", async () => {
+            const profile = {
+                id: "123",
+                public_id: "pub-123",
+                service: "fanbox",
+                name: "Test Artist",
+                indexed: "2024-01-01T00:00:00Z",
+                updated: "2024-06-01T00:00:00Z",
+                relation_id: 42,
+                post_count: 300,
+                dm_count: 5,
+                share_count: 12,
+                chat_count: 0,
+            }
+            mockFetch({ status: 200, body: profile })
+
+            const result = await client.getCreatorProfile("fanbox", "123")
+
+            expect(result.ok).toBe(true)
+            if (result.ok) {
+                expect(result.value.id).toBe("123")
+                expect(result.value.public_id).toBe("pub-123")
+                expect(result.value.service).toBe("fanbox")
+                expect(result.value.name).toBe("Test Artist")
+                expect(result.value.indexed).toBe("2024-01-01T00:00:00Z")
+                expect(result.value.updated).toBe("2024-06-01T00:00:00Z")
+                expect(result.value.relation_id).toBe(42)
+                expect(result.value.post_count).toBe(300)
+                expect(result.value.dm_count).toBe(5)
+                expect(result.value.share_count).toBe(12)
+                expect(result.value.chat_count).toBe(0)
+            }
+        })
+
+        it("relation_id may be null", async () => {
+            const profile = {
+                id: "456",
+                public_id: "pub-456",
+                service: "patreon",
+                name: "Another Artist",
+                indexed: "2024-02-01T00:00:00Z",
+                updated: "2024-07-01T00:00:00Z",
+                relation_id: null,
+                post_count: 10,
+                dm_count: 0,
+                share_count: 0,
+                chat_count: 0,
+            }
+            mockFetch({ status: 200, body: profile })
+
+            const result = await client.getCreatorProfile("patreon", "456")
+
+            expect(result.ok).toBe(true)
+            if (result.ok) {
+                expect(result.value.relation_id).toBeNull()
             }
         })
     })
@@ -189,7 +273,7 @@ describe("kemonoClient methods", () => {
 
     describe("listPosts()", () => {
         it("hits /v1/posts", async () => {
-            mockFetch({ status: 200, body: [] })
+            mockFetch({ status: 200, body: { count: 0, true_count: 0, posts: [] } })
             const spy = vi.spyOn(globalThis, "fetch")
 
             await client.listPosts()
@@ -198,7 +282,7 @@ describe("kemonoClient methods", () => {
         })
 
         it("passes search params", async () => {
-            mockFetch({ status: 200, body: [] })
+            mockFetch({ status: 200, body: { count: 0, true_count: 0, posts: [] } })
             const spy = vi.spyOn(globalThis, "fetch")
 
             await client.listPosts({ q: "sketch", o: 300 })
@@ -206,6 +290,30 @@ describe("kemonoClient methods", () => {
             const url = (spy.mock.calls[0] as [string])[0]
             expect(url).toContain("q=sketch")
             expect(url).toContain("o=300")
+        })
+
+        it("returns envelope with count, true_count, and posts array", async () => {
+            const post = {
+                id: "9",
+                user: "77",
+                service: "patreon",
+                title: "Client post",
+                substring: "A preview",
+                published: "2024-03-01T00:00:00Z",
+                file: { name: "a.jpg", path: "/a.jpg" },
+                attachments: [],
+            }
+            mockFetch({ status: 200, body: { count: 1, true_count: 42000, posts: [post] } })
+
+            const result = await client.listPosts()
+
+            expect(result.ok).toBe(true)
+            if (result.ok) {
+                expect(result.value.count).toBe(1)
+                expect(result.value.true_count).toBe(42000)
+                expect(Array.isArray(result.value.posts)).toBe(true)
+                expect(result.value.posts[0]?.id).toBe("9")
+            }
         })
     })
 
@@ -248,6 +356,79 @@ describe("kemonoClient methods", () => {
             if (result.ok) {
                 expect(result.value.id).toBe("42")
                 expect(result.value).not.toHaveProperty("post")
+            }
+        })
+
+        it("returns all declared PostDetail fields on success", async () => {
+            const inner = {
+                id: "77",
+                user: "20",
+                service: "fanbox",
+                title: "Full detail post",
+                content: "Body text",
+                embed: {},
+                shared_file: false,
+                added: "2024-04-01T00:00:00Z",
+                published: "2024-04-01T00:00:00Z",
+                edited: null,
+                file: { name: "img.png", path: "/img.png" },
+                attachments: [],
+                next: "78",
+                prev: "76",
+                poll: null,
+                captions: null,
+                tags: ["fanart", "sketch"],
+                incomplete_rewards: false,
+            }
+            mockFetch({ status: 200, body: { post: inner } })
+
+            const result = await client.getPost("fanbox", "20", "77")
+
+            expect(result.ok).toBe(true)
+            if (result.ok) {
+                expect(result.value.id).toBe("77")
+                expect(result.value.next).toBe("78")
+                expect(result.value.prev).toBe("76")
+                expect(result.value.poll).toBeNull()
+                expect(result.value.captions).toBeNull()
+                expect(result.value.tags).toEqual(["fanart", "sketch"])
+                expect(result.value.incomplete_rewards).toBe(false)
+            }
+        })
+
+        it("poll and captions may be non-null objects", async () => {
+            const poll = { question: "Favourite style?", options: ["line art", "painted"] }
+            const captions = [{ language: "en", content: "A caption" }]
+            const inner = {
+                id: "78",
+                user: "20",
+                service: "fanbox",
+                title: "Poll post",
+                content: "",
+                embed: {},
+                shared_file: false,
+                added: "2024-04-02T00:00:00Z",
+                published: "2024-04-02T00:00:00Z",
+                edited: null,
+                file: { name: "", path: "" },
+                attachments: [],
+                next: null,
+                prev: "77",
+                poll,
+                captions,
+                tags: null,
+                incomplete_rewards: null,
+            }
+            mockFetch({ status: 200, body: { post: inner } })
+
+            const result = await client.getPost("fanbox", "20", "78")
+
+            expect(result.ok).toBe(true)
+            if (result.ok) {
+                expect(result.value.poll).toEqual(poll)
+                expect(result.value.captions).toEqual(captions)
+                expect(result.value.tags).toBeNull()
+                expect(result.value.incomplete_rewards).toBeNull()
             }
         })
     })
