@@ -3,7 +3,7 @@ import { request } from "@/http"
 import type { QueryParams } from "@/http"
 import type { KemonoService } from "@/platforms"
 import type { Result } from "@/result"
-import { err } from "@/result"
+import { err, ok } from "@/result"
 import type {
     ListPostsParams,
     ListPostsResponse,
@@ -50,7 +50,12 @@ export const getPost = async (
     )
     if (!result.ok)
         return result
-    return { ok: true, value: result.value.post }
+
+    const post = result.value.post
+    if (post === undefined || post === null || typeof post.id !== "string")
+        return err("PARSE_ERROR", "Expected { post: PostDetail } envelope but got unexpected response shape")
+
+    return ok(post)
 }
 
 export const getRandomPost = async (
