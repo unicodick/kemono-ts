@@ -27,8 +27,10 @@ export type {
 export type {
     FileAttachment,
     ListPostsParams,
+    ListPostsResponse,
     Post,
     PostDetail,
     PostDetailResponse,
     PostRevision,
+    PostSummary,
 } from "@/types/post"

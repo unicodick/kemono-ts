@@ -6,7 +6,7 @@ import type { Result } from "@/result"
 import { err } from "@/result"
 import type {
     ListPostsParams,
-    Post,
+    ListPostsResponse,
     PostDetail,
     PostDetailResponse,
     PostRevision,
@@ -21,7 +21,7 @@ const toQueryParams = (params: ListPostsParams): QueryParams =>
 export const listPosts = (
     config: HttpClientConfig,
     params?: ListPostsParams,
-): Promise<Result<Post[]>> => {
+): Promise<Result<ListPostsResponse>> => {
     if (params?.o !== undefined && params.o % OFFSET_STEP !== 0) {
         return Promise.resolve(
             err(
@@ -31,7 +31,7 @@ export const listPosts = (
         )
     }
 
-    return request<Post[]>(
+    return request<ListPostsResponse>(
         "/v1/posts",
         config,
         params ? toQueryParams(params) : undefined,

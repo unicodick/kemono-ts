@@ -25,7 +25,7 @@ import type {
 } from "@/types/creator"
 import type {
     ListPostsParams,
-    Post,
+    ListPostsResponse,
     PostDetail,
     PostRevision,
 } from "@/types/post"
@@ -77,7 +77,7 @@ export class KemonoClient<P extends Platform = "kemono"> {
         return getFancards(this.config, creatorId)
     }
 
-    listPosts(params?: ListPostsParams): Promise<Result<Post[]>> {
+    listPosts(params?: ListPostsParams): Promise<Result<ListPostsResponse>> {
         return listPosts(this.config, params)
     }
 
