@@ -42,6 +42,16 @@ export type Post = {
 export type PostDetail = Post & {
     next: string | null,
     prev: string | null,
+    // the following fields are always present on the API response object;
+    // the value may be null when the post has no associated data.
+    /** poll attached to the post, or null if no poll exists. */
+    poll: Record<string, unknown> | null,
+    /** caption/subtitle objects, or null if none are present. */
+    captions: Record<string, unknown>[] | null,
+    /** tag strings attached to the post, or null if untagged. */
+    tags: string[] | null,
+    /** true when the post has incomplete reward gates; null if not applicable. */
+    incomplete_rewards: boolean | null,
 }
 
 export type PostRevision = Post & {

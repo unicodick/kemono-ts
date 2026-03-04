@@ -18,6 +18,12 @@ export type CreatorProfile = {
     // unlike Creator (from listCreators) where they are UNIX timestamps (number).
     indexed: string,
     updated: string,
+    // relation_id is null when the creator has no cross-service relation on record.
+    relation_id: number | null,
+    post_count: number,
+    dm_count: number,
+    share_count: number,
+    chat_count: number,
 }
 
 export type Announcement = {
