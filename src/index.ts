@@ -31,5 +31,4 @@ export type {
     PostDetail,
     PostDetailResponse,
     PostRevision,
-    RandomPost,
 } from "@/types/post"

@@ -28,7 +28,6 @@ import type {
     Post,
     PostDetail,
     PostRevision,
-    RandomPost,
 } from "@/types/post"
 
 export type KemonoClientConfig = HttpClientOptions
@@ -82,7 +81,7 @@ export class KemonoClient<P extends Platform = "kemono"> {
         return listPosts(this.config, params)
     }
 
-    getRandomPost(): Promise<Result<RandomPost>> {
+    getRandomPost(): Promise<Result<PostDetail>> {
         return getRandomPost(this.config)
     }
 

@@ -1,6 +1,7 @@
 import type { HttpClientConfig } from "@/config"
 import { request } from "@/http"
 import type { QueryParams } from "@/http"
+import type { KemonoService } from "@/platforms"
 import type { Result } from "@/result"
 import { err } from "@/result"
 import type {
@@ -52,10 +53,15 @@ export const getPost = async (
     return { ok: true, value: result.value.post }
 }
 
-export const getRandomPost = (
+export const getRandomPost = async (
     config: HttpClientConfig,
-): Promise<Result<RandomPost>> =>
-    request<RandomPost>("/v1/posts/random", config)
+): Promise<Result<PostDetail>> => {
+    const ptr = await request<RandomPost>("/v1/posts/random", config)
+    if (!ptr.ok)
+        return ptr
+    const { service, artist_id, post_id } = ptr.value
+    return getPost(config, service as KemonoService, artist_id, post_id)
+}
 
 export const getPostRevisions = (
     config: HttpClientConfig,

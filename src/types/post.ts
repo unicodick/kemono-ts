@@ -33,6 +33,11 @@ export type PostDetailResponse = {
     post: PostDetail,
 }
 
+/**
+ * internal pointer returned by `GET /v1/posts/random`.
+ * not part of the public API surface — `getRandomPost()` follows this pointer
+ * and resolves it to a full `PostDetail` before returning to the caller.
+ */
 export type RandomPost = {
     service: Service,
     artist_id: string,
