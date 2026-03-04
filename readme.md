@@ -92,5 +92,5 @@ client.getFancards(creatorId)  // Kemono/Fanbox only
 client.listPosts({ q?: string, o?: number, tag?: string[] })
 client.getPost(service, creatorId, postId)          // PostDetail with .next / .prev
 client.getPostRevisions(service, creatorId, postId)
-client.getRandomPost()
+client.getRandomPost()                              // PostDetail with .next / .prev
 ```
