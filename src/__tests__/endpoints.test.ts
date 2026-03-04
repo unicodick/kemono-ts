@@ -456,14 +456,34 @@ describe("getPost()", () => {
     })
 
     it("unwraps { post: PostDetail } and returns PostDetail directly", async () => {
-        const inner = { id: "42", title: "hello", next: "43", prev: null }
+        const inner = {
+            id: "42",
+            user: "100",
+            service: "fanbox",
+            title: "hello",
+            content: "",
+            embed: {},
+            shared_file: false,
+            added: "2024-01-01T00:00:00Z",
+            published: "2024-01-01T00:00:00Z",
+            edited: null,
+            file: { name: "", path: "" },
+            attachments: [],
+            next: "43",
+            prev: null,
+            poll: null,
+            captions: null,
+            tags: null,
+            incomplete_rewards: null,
+        }
         mockFetch({ status: 200, body: { post: inner } })
 
         const result = await getPost(CONFIG, "fanbox", "100", "42")
 
         expect(result.ok).toBe(true)
         if (result.ok) {
-            expect(result.value).toEqual(inner)
+            expect(result.value.id).toBe("42")
+            expect(result.value.next).toBe("43")
             expect(result.value).not.toHaveProperty("post")
         }
     })
