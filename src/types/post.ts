@@ -98,3 +98,8 @@ export type ListPostsParams = {
     o?: number,
     tag?: string[],
 }
+
+export type ListPostsIteratorParams = Omit<ListPostsParams, "o"> & {
+    startOffset?: number,
+    maxPages?: number,
+}

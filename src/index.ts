@@ -26,6 +26,7 @@ export type {
 
 export type {
     FileAttachment,
+    ListPostsIteratorParams,
     ListPostsParams,
     ListPostsResponse,
     Post,

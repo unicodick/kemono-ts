@@ -145,14 +145,14 @@ describe("request()", () => {
             }
         })
 
-        it("returns HTTP_ERROR on 403", async () => {
+        it("returns FORBIDDEN on 403", async () => {
             mockFetch({ status: 403, rawBody: "forbidden" })
 
             const result = await request("/v1/posts", BASE_CONFIG)
 
             expect(result.ok).toBe(false)
             if (!result.ok) {
-                expect(result.error.code).toBe("HTTP_ERROR")
+                expect(result.error.code).toBe("FORBIDDEN")
                 expect(result.error.status).toBe(403)
             }
         })
@@ -207,26 +207,26 @@ describe("request()", () => {
             }
         })
 
-        it("returns HTTP_ERROR on empty-body 401 (unauthorised is not NOT_FOUND)", async () => {
+        it("returns UNAUTHORIZED on empty-body 401", async () => {
             mockFetch({ status: 401, rawBody: "" })
 
             const result = await request("/v1/posts", BASE_CONFIG)
 
             expect(result.ok).toBe(false)
             if (!result.ok) {
-                expect(result.error.code).toBe("HTTP_ERROR")
+                expect(result.error.code).toBe("UNAUTHORIZED")
                 expect(result.error.status).toBe(401)
             }
         })
 
-        it("returns HTTP_ERROR on empty-body 403 (forbidden is not NOT_FOUND)", async () => {
+        it("returns FORBIDDEN on empty-body 403", async () => {
             mockFetch({ status: 403, rawBody: "" })
 
             const result = await request("/v1/posts", BASE_CONFIG)
 
             expect(result.ok).toBe(false)
             if (!result.ok) {
-                expect(result.error.code).toBe("HTTP_ERROR")
+                expect(result.error.code).toBe("FORBIDDEN")
                 expect(result.error.status).toBe(403)
             }
         })
@@ -268,9 +268,26 @@ describe("request()", () => {
                 expect(result.error.code).toBe("PARSE_ERROR")
             }
         })
+
+        it("returns PARSE_ERROR when validator rejects response shape", async () => {
+            mockFetch({ status: 200, body: { nope: true } })
+
+            const result = await request<string[]>(
+                "/v1/posts",
+                BASE_CONFIG,
+                undefined,
+                value => Array.isArray(value),
+            )
+
+            expect(result.ok).toBe(false)
+            if (!result.ok) {
+                expect(result.error.code).toBe("PARSE_ERROR")
+                expect(result.error.message).toBe("Unexpected response shape")
+            }
+        })
     })
 
-    describe("nETWORK_ERROR", () => {
+    describe("network failures", () => {
         it("returns NETWORK_ERROR when fetch throws", async () => {
             mockFetchError(new Error("connection refused"))
 
@@ -281,6 +298,36 @@ describe("request()", () => {
                 expect(result.error.code).toBe("NETWORK_ERROR")
                 expect(result.error.message).toBe("connection refused")
             }
+        })
+
+        it("returns TIMEOUT on AbortError", async () => {
+            const abortError = new DOMException("The operation was aborted", "AbortError")
+            mockFetchError(abortError)
+
+            const result = await request("/v1/posts", BASE_CONFIG)
+
+            expect(result.ok).toBe(false)
+            if (!result.ok) {
+                expect(result.error.code).toBe("TIMEOUT")
+            }
+        })
+
+        it("uses custom fetch implementation from config", async () => {
+            const fetchMock = vi.fn().mockResolvedValueOnce({
+                ok: true,
+                status: 200,
+                headers: { get: () => null },
+                json: () => Promise.resolve([]),
+                text: () => Promise.resolve("[]"),
+            } as unknown as Response)
+
+            const result = await request("/v1/posts", {
+                ...BASE_CONFIG,
+                fetch: fetchMock as typeof fetch,
+            })
+
+            expect(result.ok).toBe(true)
+            expect(fetchMock).toHaveBeenCalledTimes(1)
         })
     })
 
@@ -360,6 +407,21 @@ describe("request()", () => {
                     status: 429,
                     rawBody: "",
                     headers: { "retry-after": "0" },
+                },
+                { status: 200, body: [] },
+            ])
+
+            const result = await request("/v1/posts", WITH_RETRIES)
+
+            expect(result.ok).toBe(true)
+        })
+
+        it("accepts Retry-After HTTP-date format on 429", async () => {
+            mockFetchSequence([
+                {
+                    status: 429,
+                    rawBody: "",
+                    headers: { "retry-after": "Mon, 01 Jan 1990 00:00:00 GMT" },
                 },
                 { status: 200, body: [] },
             ])

@@ -58,6 +58,40 @@ describe("kemonoClient.kemono()", () => {
             "application/json",
         )
     })
+
+    it("merges custom headers with default Accept when Accept is omitted", async () => {
+        mockFetch({ status: 200, body: [] })
+        const spy = vi.spyOn(globalThis, "fetch")
+        const client = KemonoClient.kemono({
+            headers: { "X-Trace-Id": "abc-123" },
+        })
+
+        await client.listCreators()
+
+        const init = (spy.mock.calls[0] as [string, RequestInit])[1]
+        const sent = init.headers as Record<string, string>
+        expect(sent.Accept).toBe("text/css")
+        expect(sent["X-Trace-Id"]).toBe("abc-123")
+    })
+
+    it("uses config-provided fetch implementation", async () => {
+        const fetchMock = vi.fn().mockResolvedValueOnce({
+            ok: true,
+            status: 200,
+            headers: { get: () => null },
+            json: () => Promise.resolve([]),
+            text: () => Promise.resolve("[]"),
+        } as unknown as Response)
+
+        const client = KemonoClient.kemono({
+            fetch: fetchMock as typeof fetch,
+        })
+
+        const result = await client.listCreators()
+
+        expect(result.ok).toBe(true)
+        expect(fetchMock).toHaveBeenCalledTimes(1)
+    })
 })
 
 describe("kemonoClient.coomer()", () => {
@@ -269,6 +303,17 @@ describe("kemonoClient methods", () => {
                 "/v1/fanbox/user/321/fancards",
             )
         })
+
+        it("is unavailable on coomer client at type level", () => {
+            const coomer = KemonoClient.coomer()
+
+            if (false) {
+                // @ts-expect-error fancards endpoint is kemono-only
+                coomer.getFancards("321")
+            }
+
+            expect(coomer).toBeDefined()
+        })
     })
 
     describe("listPosts()", () => {
@@ -315,6 +360,58 @@ describe("kemonoClient methods", () => {
                 expect(result.value.posts[0]?.id).toBe("9")
             }
         })
+
+        it("iteratePosts() walks pages until true_count is reached", async () => {
+            mockFetchSequence([
+                {
+                    status: 200,
+                    body: {
+                        count: 1,
+                        true_count: 2,
+                        posts: [{
+                            id: "1",
+                            user: "u1",
+                            service: "patreon",
+                            title: "p1",
+                            substring: "preview",
+                            published: "2024-01-01",
+                            file: { name: "", path: "" },
+                            attachments: [],
+                        }],
+                    },
+                },
+                {
+                    status: 200,
+                    body: {
+                        count: 1,
+                        true_count: 2,
+                        posts: [{
+                            id: "2",
+                            user: "u1",
+                            service: "patreon",
+                            title: "p2",
+                            substring: "preview",
+                            published: "2024-01-02",
+                            file: { name: "", path: "" },
+                            attachments: [],
+                        }],
+                    },
+                },
+            ])
+
+            const pages = []
+            for await (const result of client.iteratePosts({ q: "test" })) {
+                pages.push(result)
+            }
+
+            expect(pages).toHaveLength(2)
+            expect(pages[0]?.ok).toBe(true)
+            expect(pages[1]?.ok).toBe(true)
+            if (pages[0]?.ok && pages[1]?.ok) {
+                expect(pages[0].value.posts[0]?.id).toBe("1")
+                expect(pages[1].value.posts[0]?.id).toBe("2")
+            }
+        })
     })
 
     describe("getRandomPost()", () => {
@@ -352,7 +449,26 @@ describe("kemonoClient methods", () => {
         })
 
         it("returns unwrapped PostDetail", async () => {
-            const inner = { id: "42", title: "hello", next: "43", prev: null }
+            const inner = {
+                id: "42",
+                user: "100",
+                service: "fanbox",
+                title: "hello",
+                content: "",
+                embed: {},
+                shared_file: false,
+                added: "2024-01-01T00:00:00Z",
+                published: "2024-01-01T00:00:00Z",
+                edited: null,
+                file: { name: "", path: "" },
+                attachments: [],
+                next: "43",
+                prev: null,
+                poll: null,
+                captions: null,
+                tags: null,
+                incomplete_rewards: null,
+            }
             mockFetch({ status: 200, body: { post: inner } })
 
             const result = await client.getPost("fanbox", "100", "42")
@@ -360,6 +476,7 @@ describe("kemonoClient methods", () => {
             expect(result.ok).toBe(true)
             if (result.ok) {
                 expect(result.value.id).toBe("42")
+                expect(result.value.next).toBe("43")
                 expect(result.value).not.toHaveProperty("post")
             }
         })

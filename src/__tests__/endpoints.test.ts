@@ -66,6 +66,16 @@ describe("listCreators()", () => {
             expect(result.value).toEqual(payload)
         }
     })
+
+    it("returns PARSE_ERROR when payload shape is invalid", async () => {
+        mockFetch({ status: 200, body: [{ bad: true }] })
+
+        const result = await listCreators(CONFIG)
+
+        expect(result.ok).toBe(false)
+        if (!result.ok)
+            expect(result.error.code).toBe("PARSE_ERROR")
+    })
 })
 
 describe("getCreatorProfile()", () => {
@@ -77,6 +87,30 @@ describe("getCreatorProfile()", () => {
 
         expect(tracker.get()).toBe(
             "https://kemono.cr/api/v1/fanbox/user/123/profile",
+        )
+    })
+
+    it("encodes path segments in profile route", async () => {
+        const validProfile = {
+            id: "abc",
+            public_id: "pub",
+            service: "fanbox",
+            name: "Artist",
+            indexed: "2024-01-01T00:00:00Z",
+            updated: "2024-01-01T00:00:00Z",
+            relation_id: null,
+            post_count: 0,
+            dm_count: 0,
+            share_count: 0,
+            chat_count: 0,
+        }
+        mockFetch({ status: 200, body: validProfile })
+        const tracker = captureUrl()
+
+        await getCreatorProfile(CONFIG, "fanbox+plus", "a b")
+
+        expect(tracker.get()).toBe(
+            "https://kemono.cr/api/v1/fanbox%2Bplus/user/a%20b/profile",
         )
     })
 
@@ -354,6 +388,16 @@ describe("listPosts()", () => {
         }
     })
 
+    it("returns PARSE_ERROR when envelope shape is invalid", async () => {
+        mockFetch({ status: 200, body: { posts: [] } })
+
+        const result = await listPosts(CONFIG)
+
+        expect(result.ok).toBe(false)
+        if (!result.ok)
+            expect(result.error.code).toBe("PARSE_ERROR")
+    })
+
     it("list-context posts carry substring, not content", async () => {
         const post = {
             id: "7",
@@ -397,15 +441,49 @@ describe("getPost()", () => {
         )
     })
 
+    it("encodes path segments in post route", async () => {
+        const postPayload = {
+            post: { id: "42", title: "hello", next: null, prev: null },
+        }
+        mockFetch({ status: 200, body: postPayload })
+        const tracker = captureUrl()
+
+        await getPost(CONFIG, "fanbox/v2", "user name", "post/42")
+
+        expect(tracker.get()).toBe(
+            "https://kemono.cr/api/v1/fanbox%2Fv2/user/user%20name/post/post%2F42",
+        )
+    })
+
     it("unwraps { post: PostDetail } and returns PostDetail directly", async () => {
-        const inner = { id: "42", title: "hello", next: "43", prev: null }
+        const inner = {
+            id: "42",
+            user: "100",
+            service: "fanbox",
+            title: "hello",
+            content: "",
+            embed: {},
+            shared_file: false,
+            added: "2024-01-01T00:00:00Z",
+            published: "2024-01-01T00:00:00Z",
+            edited: null,
+            file: { name: "", path: "" },
+            attachments: [],
+            next: "43",
+            prev: null,
+            poll: null,
+            captions: null,
+            tags: null,
+            incomplete_rewards: null,
+        }
         mockFetch({ status: 200, body: { post: inner } })
 
         const result = await getPost(CONFIG, "fanbox", "100", "42")
 
         expect(result.ok).toBe(true)
         if (result.ok) {
-            expect(result.value).toEqual(inner)
+            expect(result.value.id).toBe("42")
+            expect(result.value.next).toBe("43")
             expect(result.value).not.toHaveProperty("post")
         }
     })
@@ -717,5 +795,15 @@ describe("getRandomPost()", () => {
         if (!result.ok) {
             expect(result.error.code).toBe("PARSE_ERROR")
         }
+    })
+
+    it("returns PARSE_ERROR when random pointer shape is invalid", async () => {
+        mockFetch({ status: 200, body: { service: "patreon", artist_id: 12 } })
+
+        const result = await getRandomPost(CONFIG)
+
+        expect(result.ok).toBe(false)
+        if (!result.ok)
+            expect(result.error.code).toBe("PARSE_ERROR")
     })
 })

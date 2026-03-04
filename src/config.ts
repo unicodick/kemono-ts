@@ -4,6 +4,7 @@ import type { Platform } from "@/platforms"
 export type HttpClientConfig = {
     baseUrl: string,
     headers: Record<string, string>,
+    fetch?: typeof fetch,
     retries: number,
     retryDelay: number,
     timeoutMs: number,
@@ -12,6 +13,7 @@ export type HttpClientConfig = {
 export type HttpClientOptions = {
     baseUrl?: string,
     headers?: Record<string, string>,
+    fetch?: typeof fetch,
     retries?: number,
     retryDelay?: number,
     timeoutMs?: number,
@@ -34,7 +36,8 @@ export const buildConfig = (
     options: HttpClientOptions = {},
 ): HttpClientConfig => ({
     baseUrl: options.baseUrl ?? PLATFORM_BASE_URLS[platform],
-    headers: options.headers ?? { Accept: DEFAULT_ACCEPT },
+    headers: { Accept: DEFAULT_ACCEPT, ...options.headers },
+    fetch: options.fetch,
     retries: options.retries ?? DEFAULT_RETRIES,
     retryDelay: options.retryDelay ?? DEFAULT_RETRY_DELAY_MS,
     timeoutMs: options.timeoutMs ?? DEFAULT_TIMEOUT_MS,

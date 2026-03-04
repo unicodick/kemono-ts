@@ -32,9 +32,12 @@ const result = await client.getCreatorProfile("fanbox", "12345");
 if (!result.ok) {
     switch (result.error.code) {
         case "NOT_FOUND":      // 404
+        case "UNAUTHORIZED":   // 401
+        case "FORBIDDEN":      // 403
         case "RATE_LIMITED":   // 429
         case "HTTP_ERROR":     // any other non-2xx
         case "NETWORK_ERROR":  // fetch threw
+        case "TIMEOUT":        // request exceeded timeoutMs
         case "PARSE_ERROR":    // invalid JSON or unexpected response shape
         case "INVALID_PARAMS": // bad arguments (e.g. invalid offset)
     }
@@ -58,6 +61,7 @@ const client = KemonoClient.kemono({
     retryDelay: 1000,  // exponential back-off: retryDelay * 2^attempt
     timeoutMs: 30_000,
     baseUrl: "https://kemono.cr/api",
+    fetch: globalThis.fetch, // optional custom fetch implementation
 });
 ```
 
@@ -65,12 +69,12 @@ const client = KemonoClient.kemono({
 
 ### Custom headers
 
-`headers` **replaces** defaults entirely. Include `Accept: text/css` explicitly if needed:
+`headers` are merged with defaults (`Accept: text/css` is kept unless overridden):
 
 ```ts
 const client = KemonoClient.kemono({
     headers: {
-        "Accept": "text/css",
+        "Accept": "application/json", // override default when needed
         "X-My-Header": "value",
     },
 });
@@ -107,6 +111,7 @@ client.listPosts({ q?: string, o?: number, tag?: string[] })
 client.getPost(service, creatorId, postId)          // PostDetail with .next / .prev
 client.getPostRevisions(service, creatorId, postId)
 client.getRandomPost()                              // PostDetail with .next / .prev
+client.iteratePosts({ q?: string, tag?: string[] }) // AsyncGenerator<Result<ListPostsResponse>>
 ```
 
 ### `listPosts` - pagination and envelope
@@ -134,3 +139,14 @@ const lastOffset = Math.floor((result.value.true_count - 1) / 150) * 150;
 ### `getRandomPost`
 
 Makes **two** sequential requests: `/v1/posts/random` for a pointer, then `/v1/{service}/user/{id}/post/{postId}` for the full `PostDetail`.
+
+### `iteratePosts`
+
+Async iterator over paginated `/v1/posts` responses:
+
+```ts
+for await (const pageResult of client.iteratePosts({ q: "sketch", maxPages: 3 })) {
+    if (!pageResult.ok) break;
+    console.log(pageResult.value.posts);
+}
+```
