@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { KemonoClient } from "@/client"
 import { PLATFORM_BASE_URLS } from "@/platforms"
-import { mockFetch } from "./helpers/fetch-mock"
+import { mockFetch, mockFetchSequence } from "./helpers/fetch-mock"
 
 afterEach(() => {
     vi.restoreAllMocks()
@@ -319,11 +319,16 @@ describe("kemonoClient methods", () => {
 
     describe("getRandomPost()", () => {
         it("hits /v1/posts/random", async () => {
-            mockFetch({
-                status: 200,
-                body: { service: "fanbox", artist_id: "1", post_id: "2" },
-            })
-            const spy = vi.spyOn(globalThis, "fetch")
+            const spy = mockFetchSequence([
+                {
+                    status: 200,
+                    body: { service: "fanbox", artist_id: "1", post_id: "2" },
+                },
+                {
+                    status: 200,
+                    body: { post: { id: "2", title: "t", next: null, prev: null } },
+                },
+            ])
 
             await client.getRandomPost()
 

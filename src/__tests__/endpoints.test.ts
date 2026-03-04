@@ -252,7 +252,7 @@ describe("listPosts()", () => {
         if (!result.ok) {
             expect(result.error.code).toBe("INVALID_PARAMS")
             expect(result.error.message).toBe(
-                "offset must be a multiple of 150",
+                "offset must be a non-negative multiple of 150",
             )
         }
     })
@@ -261,6 +261,34 @@ describe("listPosts()", () => {
         const spy = vi.spyOn(globalThis, "fetch")
 
         for (const offset of [1, 75, 149, 151, 300 + 1]) {
+            const result = await listPosts(CONFIG, { o: offset })
+            expect(spy).not.toHaveBeenCalled()
+            expect(result.ok).toBe(false)
+            if (!result.ok)
+                expect(result.error.code).toBe("INVALID_PARAMS")
+        }
+    })
+
+    it("returns INVALID_PARAMS for negative offsets that are multiples of 150", async () => {
+        const spy = vi.spyOn(globalThis, "fetch")
+
+        for (const offset of [-150, -300, -450]) {
+            const result = await listPosts(CONFIG, { o: offset })
+            expect(spy).not.toHaveBeenCalled()
+            expect(result.ok).toBe(false)
+            if (!result.ok) {
+                expect(result.error.code).toBe("INVALID_PARAMS")
+                expect(result.error.message).toBe(
+                    "offset must be a non-negative multiple of 150",
+                )
+            }
+        }
+    })
+
+    it("returns INVALID_PARAMS for negative non-multiple offsets", async () => {
+        const spy = vi.spyOn(globalThis, "fetch")
+
+        for (const offset of [-1, -75, -149]) {
             const result = await listPosts(CONFIG, { o: offset })
             expect(spy).not.toHaveBeenCalled()
             expect(result.ok).toBe(false)
