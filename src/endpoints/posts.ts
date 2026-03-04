@@ -18,7 +18,7 @@ import {
     isRandomPost,
 } from "@/validation"
 
-const OFFSET_STEP = 150
+export const OFFSET_STEP = 150
 
 const toQueryParams = (params: ListPostsParams): QueryParams =>
     params as QueryParams

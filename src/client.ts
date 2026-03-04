@@ -12,9 +12,9 @@ import {
     getPostRevisions,
     getRandomPost,
     listPosts,
+    OFFSET_STEP,
 } from "@/endpoints/posts"
 import type { Platform, PlatformService } from "@/platforms"
-import { ok } from "@/result"
 import type { Result } from "@/result"
 import type {
     Announcement,
@@ -118,14 +118,14 @@ export class KemonoClient<P extends Platform = "kemono"> {
             }
 
             const { count, true_count } = result.value
-            yield ok(result.value)
+            yield result
 
             pages++
             yieldedPosts += count
             if (count === 0 || yieldedPosts >= true_count)
                 return
 
-            offset += 150
+            offset += OFFSET_STEP
         }
     }
 
