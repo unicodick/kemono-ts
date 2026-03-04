@@ -1,7 +1,6 @@
 import type { HttpClientConfig } from "@/config"
 import { request } from "@/http"
 import type { QueryParams } from "@/http"
-import type { KemonoService } from "@/platforms"
 import type { Result } from "@/result"
 import { err, ok } from "@/result"
 import type {
@@ -22,11 +21,11 @@ export const listPosts = (
     config: HttpClientConfig,
     params?: ListPostsParams,
 ): Promise<Result<ListPostsResponse>> => {
-    if (params?.o !== undefined && params.o % OFFSET_STEP !== 0) {
+    if (params?.o !== undefined && (params.o < 0 || params.o % OFFSET_STEP !== 0)) {
         return Promise.resolve(
             err(
                 "INVALID_PARAMS",
-                `offset must be a multiple of ${OFFSET_STEP}`,
+                `offset must be a non-negative multiple of ${OFFSET_STEP}`,
             ),
         )
     }
@@ -65,7 +64,7 @@ export const getRandomPost = async (
     if (!ptr.ok)
         return ptr
     const { service, artist_id, post_id } = ptr.value
-    return getPost(config, service as KemonoService, artist_id, post_id)
+    return getPost(config, service, artist_id, post_id)
 }
 
 export const getPostRevisions = (
