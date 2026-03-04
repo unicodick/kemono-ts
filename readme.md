@@ -31,11 +31,12 @@ const result = await client.getCreatorProfile("fanbox", "12345");
 
 if (!result.ok) {
     switch (result.error.code) {
-        case "NOT_FOUND":     // 404
-        case "RATE_LIMITED":  // 429
-        case "HTTP_ERROR":    // any other non-2xx
-        case "NETWORK_ERROR": // fetch threw
-        case "PARSE_ERROR":   // invalid JSON
+        case "NOT_FOUND":      // 404
+        case "RATE_LIMITED":   // 429
+        case "HTTP_ERROR":     // any other non-2xx
+        case "NETWORK_ERROR":  // fetch threw
+        case "PARSE_ERROR":    // invalid JSON or unexpected response shape
+        case "INVALID_PARAMS": // bad arguments (e.g. invalid offset)
     }
 }
 ```
@@ -62,13 +63,26 @@ const client = KemonoClient.kemono({
 
 `Retry-After` is respected on 429 responses.
 
+### Custom headers
+
+`headers` **replaces** defaults entirely. Include `Accept: text/css` explicitly if needed:
+
+```ts
+const client = KemonoClient.kemono({
+    headers: {
+        "Accept": "text/css",
+        "X-My-Header": "value",
+    },
+});
+```
+
 ## Platforms
 
 The platform type narrows valid services at compile time:
 
 ```ts
 const kemono = KemonoClient.kemono();
-kemono.getCreatorPosts("onlyfans", "123"); // TS error — onlyfans is Coomer-only
+kemono.getCreatorPosts("onlyfans", "123"); // TS error - onlyfans is Coomer-only
 ```
 
 **Kemono:** `patreon` `fanbox` `discord` `fantia` `afdian` `boosty` `gumroad` `subscribestar` `dlsite`  
@@ -92,5 +106,31 @@ client.getFancards(creatorId)  // Kemono/Fanbox only
 client.listPosts({ q?: string, o?: number, tag?: string[] })
 client.getPost(service, creatorId, postId)          // PostDetail with .next / .prev
 client.getPostRevisions(service, creatorId, postId)
-client.getRandomPost()
+client.getRandomPost()                              // PostDetail with .next / .prev
 ```
+
+### `listPosts` - pagination and envelope
+
+Returns a `ListPostsResponse` envelope:
+
+```ts
+const result = await client.listPosts({ q: "sketch", o: 150 });
+
+if (result.ok) {
+    result.value.count;       // posts on this page
+    result.value.true_count;  // total posts across all pages
+    result.value.posts;       // PostSummary[]
+}
+```
+
+`o` must be a **non-negative multiple of 150** (`0`, `150`, `300`, …); anything else returns `INVALID_PARAMS` without a network request.
+
+```ts
+const lastOffset = Math.floor((result.value.true_count - 1) / 150) * 150;
+```
+
+`PostSummary` includes a `substring` preview but omits `content`, `embed`, `added`, and `edited`. Use `getPost()` for the full body.
+
+### `getRandomPost`
+
+Makes **two** sequential requests: `/v1/posts/random` for a pointer, then `/v1/{service}/user/{id}/post/{postId}` for the full `PostDetail`.

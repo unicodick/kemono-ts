@@ -1,6 +1,6 @@
 {
     "name": "kemono-ts",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "description": "Typed TypeScript client for the Kemono/Coomer API",
     "type": "module",
     "main": "build/index.js",
@@ -35,7 +35,7 @@
     "homepage": "https://github.com/unicodick/kemono-ts#readme",
     "repository": {
         "type": "git",
-        "url": "https://github.com/unicodick/kemono-ts.git"
+        "url": "git+https://github.com/unicodick/kemono-ts.git"
     },
     "bugs": {
         "url": "https://github.com/unicodick/kemono-ts/issues"

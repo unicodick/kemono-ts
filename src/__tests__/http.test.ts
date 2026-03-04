@@ -9,6 +9,7 @@ import {
 
 const BASE_CONFIG = {
     baseUrl: "https://kemono.cr/api",
+    headers: { Accept: "text/css" },
     retries: 0,
     retryDelay: 0,
     timeoutMs: 5000,
@@ -16,8 +17,14 @@ const BASE_CONFIG = {
 
 const WITH_RETRIES = {
     ...BASE_CONFIG,
+    headers: { Accept: "text/css" },
     retries: 2,
     retryDelay: 0,
+}
+
+const captureRequestInit = (): { get: () => RequestInit } => {
+    const spy = vi.spyOn(globalThis, "fetch")
+    return { get: () => (spy.mock.calls[0] as [string, RequestInit])[1] }
 }
 
 afterEach(() => {
@@ -25,6 +32,47 @@ afterEach(() => {
 })
 
 describe("request()", () => {
+    describe("headers", () => {
+        it("sends Accept: text/css by default (upstream anti-scrape workaround)", async () => {
+            mockFetch({ status: 200, body: [] })
+            const tracker = captureRequestInit()
+
+            await request("/v1/creators.txt", BASE_CONFIG)
+
+            expect(
+                (tracker.get().headers as Record<string, string>).Accept,
+            ).toBe("text/css")
+        })
+
+        it("forwards caller-supplied headers verbatim", async () => {
+            mockFetch({ status: 200, body: [] })
+            const tracker = captureRequestInit()
+
+            await request("/v1/creators.txt", {
+                ...BASE_CONFIG,
+                headers: { Accept: "application/json" },
+            })
+
+            expect(
+                (tracker.get().headers as Record<string, string>).Accept,
+            ).toBe("application/json")
+        })
+
+        it("supports arbitrary caller-supplied header keys", async () => {
+            mockFetch({ status: 200, body: [] })
+            const tracker = captureRequestInit()
+
+            await request("/v1/creators.txt", {
+                ...BASE_CONFIG,
+                headers: { "Accept": "text/css", "X-Custom-Header": "my-value" },
+            })
+
+            const sent = tracker.get().headers as Record<string, string>
+            expect(sent.Accept).toBe("text/css")
+            expect(sent["X-Custom-Header"]).toBe("my-value")
+        })
+    })
+
     describe("success", () => {
         it("returns ok:true with parsed body on 200", async () => {
             const payload = [{ id: "1", name: "artist" }]
@@ -109,7 +157,7 @@ describe("request()", () => {
             }
         })
 
-        it("returns HTTP_ERROR with fallback message when body is empty", async () => {
+        it("returns HTTP_ERROR on empty-body 500", async () => {
             mockFetch({ status: 500, rawBody: "" })
 
             const result = await request("/v1/posts", BASE_CONFIG)
@@ -117,7 +165,94 @@ describe("request()", () => {
             expect(result.ok).toBe(false)
             if (!result.ok) {
                 expect(result.error.code).toBe("HTTP_ERROR")
-                expect(result.error.message).toBe("HTTP 500")
+                expect(result.error.status).toBe(500)
+            }
+        })
+
+        it("returns HTTP_ERROR on empty-body 302", async () => {
+            mockFetch({ status: 302, rawBody: "" })
+
+            const result = await request("/v1/posts", BASE_CONFIG)
+
+            expect(result.ok).toBe(false)
+            if (!result.ok) {
+                expect(result.error.code).toBe("HTTP_ERROR")
+                expect(result.error.status).toBe(302)
+            }
+        })
+
+        it("returns HTTP_ERROR on whitespace-only body 5xx", async () => {
+            mockFetch({ status: 500, rawBody: "   " })
+
+            const result = await request("/v1/posts", BASE_CONFIG)
+
+            expect(result.ok).toBe(false)
+            if (!result.ok) {
+                expect(result.error.code).toBe("HTTP_ERROR")
+                // whitespace is truthy so it is preserved as-is rather than
+                // replaced by the "HTTP 500" fallback, which only fires for ""
+                expect(result.error.message).toBe("   ")
+            }
+        })
+
+        it("returns HTTP_ERROR on empty-body 400 (bad request is not NOT_FOUND)", async () => {
+            mockFetch({ status: 400, rawBody: "" })
+
+            const result = await request("/v1/posts", BASE_CONFIG)
+
+            expect(result.ok).toBe(false)
+            if (!result.ok) {
+                expect(result.error.code).toBe("HTTP_ERROR")
+                expect(result.error.status).toBe(400)
+            }
+        })
+
+        it("returns HTTP_ERROR on empty-body 401 (unauthorised is not NOT_FOUND)", async () => {
+            mockFetch({ status: 401, rawBody: "" })
+
+            const result = await request("/v1/posts", BASE_CONFIG)
+
+            expect(result.ok).toBe(false)
+            if (!result.ok) {
+                expect(result.error.code).toBe("HTTP_ERROR")
+                expect(result.error.status).toBe(401)
+            }
+        })
+
+        it("returns HTTP_ERROR on empty-body 403 (forbidden is not NOT_FOUND)", async () => {
+            mockFetch({ status: 403, rawBody: "" })
+
+            const result = await request("/v1/posts", BASE_CONFIG)
+
+            expect(result.ok).toBe(false)
+            if (!result.ok) {
+                expect(result.error.code).toBe("HTTP_ERROR")
+                expect(result.error.status).toBe(403)
+            }
+        })
+
+        it("returns HTTP_ERROR on empty-body 410 (gone is not NOT_FOUND)", async () => {
+            mockFetch({ status: 410, rawBody: "" })
+
+            const result = await request("/v1/posts", BASE_CONFIG)
+
+            expect(result.ok).toBe(false)
+            if (!result.ok) {
+                expect(result.error.code).toBe("HTTP_ERROR")
+                expect(result.error.status).toBe(410)
+            }
+        })
+
+        it("returns HTTP_ERROR with body message when body is non-empty", async () => {
+            mockFetch({ status: 500, rawBody: "internal server error" })
+
+            const result = await request("/v1/posts", BASE_CONFIG)
+
+            expect(result.ok).toBe(false)
+            if (!result.ok) {
+                expect(result.error.code).toBe("HTTP_ERROR")
+                expect(result.error.message).toBe("internal server error")
+                expect(result.error.status).toBe(500)
             }
         })
     })

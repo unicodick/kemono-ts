@@ -58,7 +58,7 @@ export const request = async <T>(
 
         try {
             const response = await fetch(url.toString(), {
-                headers: { Accept: "application/json" },
+                headers: config.headers,
                 signal: controller.signal,
             })
 

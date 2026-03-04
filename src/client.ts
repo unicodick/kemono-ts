@@ -1,5 +1,5 @@
 import { buildConfig } from "@/config"
-import type { HttpClientOptions } from "@/config"
+import type { HttpClientConfig, HttpClientOptions } from "@/config"
 import {
     getAnnouncements,
     getCreatorPosts,
@@ -25,16 +25,15 @@ import type {
 } from "@/types/creator"
 import type {
     ListPostsParams,
-    Post,
+    ListPostsResponse,
     PostDetail,
     PostRevision,
-    RandomPost,
 } from "@/types/post"
 
 export type KemonoClientConfig = HttpClientOptions
 
 export class KemonoClient<P extends Platform = "kemono"> {
-    private readonly config = buildConfig("kemono")
+    private readonly config: HttpClientConfig
 
     constructor(platform: P, options: KemonoClientConfig = {}) {
         this.config = buildConfig(platform, options)
@@ -78,11 +77,11 @@ export class KemonoClient<P extends Platform = "kemono"> {
         return getFancards(this.config, creatorId)
     }
 
-    listPosts(params?: ListPostsParams): Promise<Result<Post[]>> {
+    listPosts(params?: ListPostsParams): Promise<Result<ListPostsResponse>> {
         return listPosts(this.config, params)
     }
 
-    getRandomPost(): Promise<Result<RandomPost>> {
+    getRandomPost(): Promise<Result<PostDetail>> {
         return getRandomPost(this.config)
     }
 
