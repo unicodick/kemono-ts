@@ -16,7 +16,7 @@ const toQueryParams = (params: CreatorPostsParams): QueryParams =>
 
 export const listCreators = (
     config: HttpClientConfig,
-): Promise<Result<Creator[]>> => request<Creator[]>("/v1/creators.txt", config)
+): Promise<Result<Creator[]>> => request<Creator[]>("/v1/creators", config)
 
 export const getCreatorProfile = (
     config: HttpClientConfig,
