@@ -1,5 +1,5 @@
 import { buildConfig } from "@/config"
-import type { HttpClientOptions } from "@/config"
+import type { HttpClientConfig, HttpClientOptions } from "@/config"
 import {
     getAnnouncements,
     getCreatorPosts,
@@ -33,7 +33,7 @@ import type {
 export type KemonoClientConfig = HttpClientOptions
 
 export class KemonoClient<P extends Platform = "kemono"> {
-    private readonly config = buildConfig("kemono")
+    private readonly config: HttpClientConfig
 
     constructor(platform: P, options: KemonoClientConfig = {}) {
         this.config = buildConfig(platform, options)

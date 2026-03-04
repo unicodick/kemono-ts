@@ -29,14 +29,6 @@ const DEFAULT_TIMEOUT_MS = 30_000
 // the upstream block is lifted.
 const DEFAULT_ACCEPT = "text/css"
 
-export const DEFAULT_HTTP_CONFIG: HttpClientConfig = {
-    baseUrl: PLATFORM_BASE_URLS.kemono,
-    headers: { Accept: DEFAULT_ACCEPT },
-    retries: DEFAULT_RETRIES,
-    retryDelay: DEFAULT_RETRY_DELAY_MS,
-    timeoutMs: DEFAULT_TIMEOUT_MS,
-}
-
 export const buildConfig = (
     platform: Platform,
     options: HttpClientOptions = {},
